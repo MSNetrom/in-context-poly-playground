@@ -19,19 +19,19 @@ class FunctionClassError(Benchmark):
     def evaluate(self, models: Iterable[ContextModel], num_batches: int = 1) -> Iterable[Tensor]:
         """Produce a tensor of shape (batch_size * num_batches, metric_shape) for each model provided"""
 
-        with torch.no_grad():
-            errs = torch.stack([
-                torch.stack([
-                    self.metric.evaluate(
-                        y_batch.to('cpu'),
-                        model.evaluate(x_batch, y_batch).to('cpu')
-                    )
-                    for model in models
-                ])
-                for _, (x_batch, y_batch) in zip(range(num_batches), self.function_class)
+        # with torch.no_grad():
+        errs = torch.stack([
+            torch.stack([
+                self.metric.evaluate(
+                    y_batch.to('cpu'),
+                    model.evaluate(x_batch, y_batch).to('cpu')
+                )
+                for model in models
             ])
+            for _, (x_batch, y_batch) in zip(range(num_batches), self.function_class)
+        ])
 
-            # errs is of shape: (#batches, #models, batch_size, sequence_length, *metric_dims)
+        # errs is of shape: (#batches, #models, batch_size, sequence_length, *metric_dims)
 
         errs = torch.transpose(errs, 0, 1)
         errs = torch.flatten(errs, 1, 2)
