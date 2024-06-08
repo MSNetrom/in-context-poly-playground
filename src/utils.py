@@ -102,3 +102,30 @@ class SparseDistribution(dist.Distribution):
     @property
     def event_shape(self) -> torch.Size:
         return torch.Size([self.x_dim])
+    
+
+class FakeLinspaceDistribution(dist.Distribution):
+    """A fake distribution used for evaluation and vizualisation purposes. Only for 1D x-inputs"""
+
+    def __init__(self, batch_shape: torch.Size, *args: Any, **kwargs: Any):
+        super(FakeLinspaceDistribution, self).__init__(*args, **(kwargs | {"validate_args": False}))
+        self.batch_size = batch_shape[0]
+        self.seq_len = batch_shape[1]
+        self.x_dim = 1 #event_shape[0]
+
+        self._sample = torch.linspace(-1, 1, self.seq_len).repeat(self.batch_size, 1).unsqueeze(-1)
+
+        print("Sample shape", self._sample.shape)
+
+    def sample(self, sample_shape: torch.Size = torch.Size()):
+        return self._sample
+    
+    @property
+    def batch_shape(self) -> torch.Size:
+        return torch.Size([self.batch_size, self.seq_len])
+    
+    @property
+    def event_shape(self) -> torch.Size:
+        return torch.Size([self.x_dim])
+    
+    

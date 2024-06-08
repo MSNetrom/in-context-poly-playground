@@ -5,6 +5,7 @@ log_freq: 100
 checkpoint_freq: 1000
 optim:
     type: adam
+    lr: 0.00005
 loss_fn:
     type: mse
 b_size: 64
@@ -15,7 +16,7 @@ seq_len: !curriculum
     step_len: 1000
 x_dim: 1
 x_dist:
-    type: normal
+    type: uniform
 model: *std_mamba
 baseline_models: 
     - <<: *knn_3
