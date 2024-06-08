@@ -37,12 +37,13 @@ class ChebyshevKernelLinearRegression(FunctionClass):
     Linear combinations are generated randomly by sampling from a normal distribution
     """
 
-    def __init__(self, lowest_degree: int = 3, highest_degree: int = 11, fixed_linear_coefficients: int = 0, *args: Any, **kwargs: Any):
+    def __init__(self, lowest_degree: int = 3, highest_degree: int = 11, fixed_linear_coefficients: int = 0, different_degrees: bool = True, *args: Any, **kwargs: Any):
 
         self.chebyshev_coeffs = generate_chebyshev_coefficients(lowest_degree, highest_degree).float()
         self.lowest_degree = lowest_degree
         self.highest_degree = highest_degree
         self.fixed_linear_coefficients = fixed_linear_coefficients
+        self.different_degrees = different_degrees
 
         super(ChebyshevKernelLinearRegression, self).__init__(*args, **kwargs)
 
@@ -67,11 +68,16 @@ class ChebyshevKernelLinearRegression(FunctionClass):
         # basis_polys: (batch_size, 1 value for each poly in chebyshev_coeffs, seq_length)
         basis_polys = self.chebyshev_coeffs @ x_pows.permute(0, 2, 1)
 
+        #print("Combantions shape: ", combinations.shape)
+        # Set fixed coefficients
+        combinations[..., :self.fixed_linear_coefficients] = 1
+
         # Only include coefficients up to random degree
-        indices = torch.arange(0, self.chebyshev_coeffs.shape[0]).unsqueeze(0).expand(self.batch_size, -1)
-        rand_tresh = torch.randint(0, self.chebyshev_coeffs.shape[0], (self.batch_size, 1))
-        mask_indices = (rand_tresh < indices).unsqueeze(1)
-        combinations[mask_indices] = 0
+        if self.different_degrees:
+            indices = torch.arange(0, self.chebyshev_coeffs.shape[0]).unsqueeze(0).expand(self.batch_size, -1)
+            rand_tresh = torch.randint(0, self.chebyshev_coeffs.shape[0], (self.batch_size, 1))
+            mask_indices = (rand_tresh < indices).unsqueeze(1)
+            combinations[mask_indices] = 0
 
         # Combine basis polynomials into 1
         return (combinations @ basis_polys).squeeze(1)
