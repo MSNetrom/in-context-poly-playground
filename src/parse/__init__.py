@@ -1,5 +1,7 @@
-from .trainer import (
-    parse_training_from_file, 
+
+from .processor import (
+    process_config_from_file, 
+    process_config,
 )
 
 from .dist import (
@@ -8,7 +10,8 @@ from .dist import (
 )
 
 __all__ = [
-    "parse_training_from_file",
+    "process_config_from_file",
+    "process_config",
     "get_distribution",
     "get_x_distribution",
 ]

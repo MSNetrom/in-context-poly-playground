@@ -12,6 +12,7 @@ dependencies:
   - pip:
     # - causal-conv1d>=1.2.0
     # - mamba-ssm
+    - jupyter
     - ipykernel
     - matplotlib
     - pyyaml==6.0.1
@@ -21,3 +22,6 @@ dependencies:
     - wandb==0.12.11
     - xgboost==1.6.1
     - protobuf==3.20.1
+    - peft
+
+# pip install --upgrade jupyter ipywidgets

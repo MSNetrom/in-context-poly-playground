@@ -3,9 +3,37 @@
 
 import torch.distributions as dist
 import torch
-import math
+import wandb
+import os
+from pathlib import Path
 
 from typing import List, Optional, Any
+
+def get_latest_checkpoint_path_from_dir(checkpoint_dir: Path) -> Path:
+    # Checkpoint files are named as "checkpoint-<step>.pt"
+    checkpoint_files = list(checkpoint_dir.glob("checkpoint_*"))
+    if len(checkpoint_files) == 0:
+        raise FileNotFoundError(f"No checkpoint files found in {checkpoint_dir}")
+    checkpoint_files.sort(key=lambda x: int(x.stem.split("_")[1]))
+    return checkpoint_files[-1]
+
+def log_yaml(full_yaml: str) -> None:
+    # save locally
+    local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
+    local_config_path = os.path.join(local_dir_path, "config.yml")
+    os.makedirs(local_dir_path, exist_ok=True)
+    print("Saving config to:", local_config_path)
+    with open(local_config_path, 'w') as f:
+        f.write(full_yaml)
+
+    # save in wandb
+    wandb_dir_path = os.path.join(wandb.run.dir, "conf/") # pyright: ignore [reportOptionalMemberAccess]
+    wandb_conf_path = os.path.join(wandb_dir_path, "config.yml")
+    os.makedirs(wandb_dir_path, exist_ok=True)
+    print("Saving wandb config to:", wandb_conf_path)
+    with open(wandb_conf_path, 'w') as f:
+        f.write(full_yaml)
+    wandb.save(wandb_conf_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
 
 class CombinedDistribution(dist.Distribution):
     """Combine a number of unrelated distributions. i.e. combine a list of distributions to sample from in a combined call"""

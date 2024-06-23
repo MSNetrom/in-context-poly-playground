@@ -20,13 +20,17 @@ class BackboneModel(TrainableModel):
             n_positions: int, 
             n_embd: int=128, 
             y_dim: int = 1,
+            **kwargs: dict[Any, Any],
         ):
-        super().__init__(x_dim, y_dim)
+        super().__init__(x_dim, y_dim,)
 
         self.context_length = n_positions
         self._read_in = nn.Linear(x_dim, n_embd)
         self._backbone = backbone
         self._read_out = nn.Linear(n_embd, y_dim)
+
+        if 'model_weights' in kwargs and kwargs['model_weights'] is not None:
+            self.load_state_dict(kwargs['model_weights'])
 
     def forward(self, xs: Tensor, ys: Tensor):
         self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
@@ -66,7 +70,7 @@ class GPT2(BackboneModel):
         self.gpt2_configuration = configuration
         backbone: nn.Module = GPT2Model(configuration) # pyright: ignore[reportAssignmentType]
 
-        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim,)
+        super().__init__(backbone, x_dim, n_positions, n_embd, y_dim=y_dim, **kwargs)
 
         self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 

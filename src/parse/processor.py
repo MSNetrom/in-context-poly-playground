@@ -15,6 +15,7 @@ from .function_class import get_function_class
 from .misc import get_optimizer, get_loss_fn
 from .utils import YamlMap
 
+ProcessedYamlMap: TypeAlias = YamlMap
 ParsedYamlMap: TypeAlias = YamlMap
 
 DEFAULT_TRAINING_OPTS = {
@@ -32,8 +33,7 @@ NEEDED_TRAINING_DATA = [
 
 EXCESS_KEYS = ["y_dim", "x_dist", "function_class", "b_size", "seq_len", "x_dim"]
 
-
-def _produce_trainer_stages(data: YamlMap) -> TrainerSteps:
+def _process_config(data: YamlMap) -> ProcessedYamlMap:
     """Convert a YAML primitive stage dicts to a instantiated Trainer object"""
 
     for key in NEEDED_TRAINING_DATA:
@@ -44,10 +44,25 @@ def _produce_trainer_stages(data: YamlMap) -> TrainerSteps:
     x_dim: int = int(get_max_value(data['x_dim'], total_steps))
     y_dim: int = int(get_max_value(data['y_dim'], total_steps))
 
-    if 'model_weights' in data and 'optim_state' in data:
+    if "model_weights" in data:
         data["model"] = get_model(data['model'], x_dim, y_dim, data['model_weights'])
-        if not isinstance(data['model'], TrainableModel):
-            raise TypeError(f"Model `{data['model'].name}` is not a TrainableModel!")
+        del data['model_weights']
+    else:
+        data["model"] = get_model(data['model'], x_dim, y_dim)
+
+    if isinstance(data['model'], TrainableModel):
+
+        if "optim_state" in data:
+            data["optim"] = get_optimizer(data['model'], data['optim'], data['optim_state'])
+            del data['optim_state']
+        else:
+            data["optim"] = get_optimizer(data['model'], data['optim'])
+
+    else:        
+        raise TypeError(f"Model `{data['model'].name}` is not a TrainableModel!")
+
+    """if 'model_weights' in data and 'optim_state' in data:
+        
         data["optim"] = get_optimizer(data['model'], data['optim'], data['optim_state'])
         del data['model_weights']
         del data['optim_state']
@@ -55,7 +70,7 @@ def _produce_trainer_stages(data: YamlMap) -> TrainerSteps:
         data["model"] = get_model(data['model'], x_dim, y_dim)
         if not isinstance(data['model'], TrainableModel):
             raise TypeError(f"Model `{data['model'].name}` is not a TrainableModel!")
-        data["optim"] = get_optimizer(data['model'], data['optim'])
+        data["optim"] = get_optimizer(data['model'], data['optim'])"""
 
     data['loss_fn'] = get_loss_fn(data['loss_fn'])
 
@@ -81,12 +96,13 @@ def _produce_trainer_stages(data: YamlMap) -> TrainerSteps:
     for excess_key in EXCESS_KEYS:
         del data[excess_key]
 
-    big_trainer = TrainerSteps(**data)
+    #big_trainer = TrainerSteps(**data)
 
-    return big_trainer
+    #return big_trainer
+    return data
 
-def parse_training(yaml_content: str, skip_steps: int = 0, model_weights: Optional[Any] = None, 
-                   optim_state: Optional[Any] = None) -> tuple[TrainerSteps, ParsedYamlMap]:
+def process_config(yaml_content: str, skip_steps: int = 0, model_weights: Optional[Any] = None, 
+                   optim_state: Optional[Any] = None) -> tuple[ProcessedYamlMap, ParsedYamlMap]:
     d = yaml.load(yaml_content, Loader=yaml.Loader)
 
     d['train'] = DEFAULT_TRAINING_OPTS | d['train'] # override defaults with specified opts
@@ -94,18 +110,19 @@ def parse_training(yaml_content: str, skip_steps: int = 0, model_weights: Option
 
     if skip_steps > 0:
         training_data |= {'skip_steps': skip_steps}
-    if model_weights is not None and optim_state is not None:
-        training_data |= {'model_weights': model_weights, 'optim_state': optim_state}
+    if model_weights is not None:
+        training_data |= {'model_weights': model_weights}
+    if optim_state is not None:
+        training_data |= {'optim_state': optim_state}
 
-    big_trainer = _produce_trainer_stages(training_data)
+    return _process_config(training_data), d['train']
 
-    return big_trainer, d['train']
-
-def parse_training_from_file(
+def process_config_from_file(
         filename: str,
         include: Optional[str],
-        checkpoint_path: Optional[str] = None
-    ) -> tuple[TrainerSteps, ParsedYamlMap]:
+        checkpoint_path: Optional[str] = None,
+        ignore_optim_state: bool = False,
+    ) -> tuple[ProcessedYamlMap, ParsedYamlMap]:
 
     included = ""
     if include is not None:
@@ -122,12 +139,12 @@ def parse_training_from_file(
     full_yaml = included.strip() + '\n\n' + content
 
     if checkpoint_path is None:
-        return parse_training(full_yaml)
+        return process_config(full_yaml)
 
     latest_checkpoint = torch.load(checkpoint_path, 
                                    map_location=("cuda" if torch.cuda.is_available() else "cpu"))
     model_state = latest_checkpoint['model_state_dict']
-    optim_state = latest_checkpoint['optimizer_state_dict']
+    optim_state = latest_checkpoint['optimizer_state_dict'] if not ignore_optim_state else None
     latest_step = int(os.path.basename(checkpoint_path).split("_")[-1])
 
-    return parse_training(full_yaml, latest_step, model_state, optim_state)
+    return process_config(full_yaml, latest_step, model_state, optim_state)

@@ -80,7 +80,11 @@ class ChebyshevKernelLinearRegression(FunctionClass):
             combinations[mask_indices] = 0
 
         # Combine basis polynomials into 1
-        return (combinations @ basis_polys).squeeze(1)
+        #temp = combinations @ basis_polys
+        #print("Temp shape: ", temp.shape)
+        #return 0
+        #return (combinations @ basis_polys).squeeze(1)
+        return (combinations @ basis_polys).permute(0, 2, 1)
 
 class ChebyshevSharedRoots(FunctionClass):
 

@@ -17,7 +17,7 @@ seq_len: !curriculum
 x_dim: 1
 x_dist:
     type: uniform
-model: *std_gpt2
+model: *soft_prompting_std_gpt2
 baseline_models: 
     - <<: *knn_3
     - <<: *xgboost

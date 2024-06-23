@@ -5,6 +5,11 @@ from .transformer import (
     Mamba,
 )
 
+from .finetuning import (
+    LoraGPT2Model,
+    SoftPromptingGPT2Model,
+)
+
 from .hybrid import (
     HybridModel,
 )
@@ -37,6 +42,8 @@ MODELS: dict[str, type[ContextModel]] = {
     "xgboost"        : XGBoostModel,
     "retrieval dict" : RetrievalDictModel,
     "zero"           : ZeroModel,
+    "lora"           : LoraGPT2Model,
+    "soft_prompting" : SoftPromptingGPT2Model,
 }
 
 __all__ = [

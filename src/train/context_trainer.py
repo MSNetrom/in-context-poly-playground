@@ -7,6 +7,7 @@ from torch import nn
 
 from torch.optim import Optimizer
 from typing import Optional, Any
+from pathlib import Path
 
 from core import Baseline, TrainableModel, FunctionClass
 
@@ -24,6 +25,7 @@ class ContextTrainer:
         step_offset: int = 0,
         skip_steps: int = 0,
         predict_last: bool = False,
+        output_dir: str = f"models/",
         **kwargs: Any, 
     ):
         super().__init__()
@@ -38,6 +40,8 @@ class ContextTrainer:
         self.step_offset = step_offset
         self.skip_steps = skip_steps
         self.predict_last = predict_last
+
+        self.output_dir = output_dir
 
     def _log(self, step: int, data: dict[str, Any]) -> None:
         global_step_num = step + self.step_offset
@@ -54,9 +58,9 @@ class ContextTrainer:
                         'optimizer_state_dict': self.optim.state_dict()}
 
             # save locally
-            local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
-            os.makedirs(local_dir_path, exist_ok=True)
-            torch.save(checkpoint, os.path.join(local_dir_path, f"checkpoint_{global_step_num}"))
+            #local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
+            os.makedirs(self.output_dir, exist_ok=True)
+            torch.save(checkpoint, os.path.join(self.output_dir, f"checkpoint_{global_step_num}"))
 
             # save in wandb
             wandb_dir_path = os.path.join(wandb.run.dir, 'models') # pyright: ignore [reportOptionalMemberAccess]
@@ -64,6 +68,9 @@ class ContextTrainer:
             os.makedirs(wandb_dir_path, exist_ok=True)
             torch.save(checkpoint, wandb_path)
             wandb.save(wandb_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
+
+    def get_output_dir(self) -> Path:
+        return Path(self.output_dir)
 
     def train(self, pbar: Optional[Any] = None) -> TrainableModel:
 
@@ -150,6 +157,8 @@ class TrainerSteps(ContextTrainer):
         self.step_offset = 0
         self.predict_last = predict_last
 
+        self.output_dir = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
+
     def train(self, pbar: Optional[Any] = None) -> TrainableModel:
 
         for fc, step_count, in zip(self.function_classes, self.steps):
@@ -166,6 +175,7 @@ class TrainerSteps(ContextTrainer):
                 self.step_offset,
                 self.skip_steps_left,
                 self.predict_last,
+                self.output_dir,
             )
 
             self.model = trainer.train(pbar)

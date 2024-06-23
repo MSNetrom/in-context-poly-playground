@@ -18,10 +18,13 @@ def get_model(
     
     model_class: type[ContextModel] = MODELS[init_kwargs['type']]
 
-    init_kwargs |= { "x_dim" : x_dim, "y_dim" : y_dim }
+    init_kwargs |= { "x_dim" : x_dim, "y_dim" : y_dim, "model_weights": model_weights}
     model = clean_instantiate(model_class, **init_kwargs)
 
-    if model_weights is not None:
-        model.load_state_dict(model_weights)
+    #if model_weights is not None:
+    #    model.load_state_dict(model_weights)
+
+    #if model.NEEDS_WEIGHTS_INITIALIZATION is not None and model.NEEDS_WEIGHTS_INITIALIZATION:
+    #    model.weights_setup()
 
     return model

@@ -5,46 +5,35 @@ import yaml
 
 from typing import Any
 
-from parse import parse_training_from_file
-
-def log_yaml(full_yaml: str) -> None:
-    # save locally
-    local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
-    local_config_path = os.path.join(local_dir_path, "config.yml")
-    os.makedirs(local_dir_path, exist_ok=True)
-    with open(local_config_path, 'w') as f:
-        f.write(full_yaml)
-
-    # save in wandb
-    wandb_dir_path = os.path.join(wandb.run.dir, "conf/") # pyright: ignore [reportOptionalMemberAccess]
-    wandb_conf_path = os.path.join(wandb_dir_path, "config.yml")
-    os.makedirs(wandb_dir_path, exist_ok=True)
-    with open(wandb_conf_path, 'w') as f:
-        f.write(full_yaml)
-    wandb.save(wandb_conf_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
+from parse import process_config_from_file
+from utils import log_yaml
+#from core import TrainableModel
+from train import TrainerSteps
 
 def main(args: arg.Namespace):
 
     if args.checkpointfile == "":
-        trainer, config = parse_training_from_file(
+        processed_config, parsed_config = process_config_from_file(
             filename=args.conffile,
             include=args.includedir
         )
     else:
-        trainer, config = parse_training_from_file(
+        processed_config = process_config_from_file(
             filename=args.conffile,
             checkpoint_path=args.checkpointfile,
             include=args.includedir
         )
 
-    init_args: dict[str, Any] = { "config" : config }
+    init_args: dict[str, Any] = { "config" : processed_config['train'] }
     if args.projectname != "":
         init_args |= { "project" : args.projectname }
     if args.runname != "":
         init_args |= { "name" : args.runname }
     wandb.init(**init_args)
 
-    log_yaml(yaml.dump(config, Dumper=yaml.Dumper))
+    trainer = TrainerSteps(**processed_config)
+
+    log_yaml(yaml.dump(processed_config['train'], Dumper=yaml.Dumper))
 
     trainer.train()
 

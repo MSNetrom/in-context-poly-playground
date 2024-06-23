@@ -1,6 +1,6 @@
 import torch
 from torch import nn, Tensor
-from typing import Optional
+from typing import Optional, Any
 
 from .errors import ShapeError
 
@@ -32,6 +32,7 @@ class ContextModel:
             raise ShapeError("Too many x dimensions!" + x_shape_err_msg)
         
         if len(ys.shape) < 3:
+            print(ys.shape)
             raise ShapeError("Not enough y dimensions" + y_shape_err_msg)
         elif len(ys.shape) > 3:
             raise ShapeError("Too many y dimensions!" + y_shape_err_msg)
@@ -117,7 +118,7 @@ class ContextModel:
 
 
 class Baseline(ContextModel):
-    def __init__(self, x_dim: int, y_dim: int = 1):
+    def __init__(self, x_dim: int, y_dim: int = 1, **kwargs: dict[Any, Any]):
         super().__init__(x_dim, y_dim=y_dim)
 
 class TrainableModel(ContextModel, nn.Module):
