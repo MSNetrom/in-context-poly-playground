@@ -52,7 +52,7 @@ def _process_config(data: YamlMap) -> ProcessedYamlMap:
 
     if isinstance(data['model'], TrainableModel):
 
-        if "optim_state" in data:
+        if 'model_weights' in data and 'optim_state' in data:
             data["optim"] = get_optimizer(data['model'], data['optim'], data['optim_state'])
             del data['optim_state']
         else:
