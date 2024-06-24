@@ -16,11 +16,11 @@ def perform_training(conf_path: Path, include_path: Path, checkpoint_dir: Path |
                                                                include=str(include_path),
                                                                checkpoint_path=str(get_latest_checkpoint_path_from_dir(checkpoint_dir)) if checkpoint_dir is not None else None,
                                                                ignore_optim_state=ignore_optim_state)
+    log_yaml(yaml.dump(parsed_config, Dumper=yaml.Dumper))
     
     trainer = TrainerSteps(**processed_config)
     trainer.train()
     output_dir = trainer.get_output_dir()
-    log_yaml(yaml.dump(parsed_config, Dumper=yaml.Dumper))
     wandb.finish()
 
     return output_dir

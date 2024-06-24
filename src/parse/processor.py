@@ -46,7 +46,7 @@ def _process_config(data: YamlMap) -> ProcessedYamlMap:
 
     if "model_weights" in data:
         data["model"] = get_model(data['model'], x_dim, y_dim, data['model_weights'])
-        del data['model_weights']
+        #del data['model_weights']
     else:
         data["model"] = get_model(data['model'], x_dim, y_dim)
 
@@ -54,23 +54,15 @@ def _process_config(data: YamlMap) -> ProcessedYamlMap:
 
         if 'model_weights' in data and 'optim_state' in data:
             data["optim"] = get_optimizer(data['model'], data['optim'], data['optim_state'])
-            del data['optim_state']
+            #del data['optim_state']
         else:
             data["optim"] = get_optimizer(data['model'], data['optim'])
 
     else:        
         raise TypeError(f"Model `{data['model'].name}` is not a TrainableModel!")
-
-    """if 'model_weights' in data and 'optim_state' in data:
-        
-        data["optim"] = get_optimizer(data['model'], data['optim'], data['optim_state'])
-        del data['model_weights']
-        del data['optim_state']
-    else:
-        data["model"] = get_model(data['model'], x_dim, y_dim)
-        if not isinstance(data['model'], TrainableModel):
-            raise TypeError(f"Model `{data['model'].name}` is not a TrainableModel!")
-        data["optim"] = get_optimizer(data['model'], data['optim'])"""
+    
+    data.pop('model_weights', None)
+    data.pop('optim_state', None)
 
     data['loss_fn'] = get_loss_fn(data['loss_fn'])
 
@@ -95,10 +87,7 @@ def _process_config(data: YamlMap) -> ProcessedYamlMap:
 
     for excess_key in EXCESS_KEYS:
         del data[excess_key]
-
-    #big_trainer = TrainerSteps(**data)
-
-    #return big_trainer
+        
     return data
 
 def process_config(yaml_content: str, skip_steps: int = 0, model_weights: Optional[Any] = None, 
