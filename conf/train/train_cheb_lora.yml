@@ -1,19 +1,15 @@
 function_class: 
     type: chebyshev kernel linear regression
-steps: 2 #2000000
-log_freq: 100
-checkpoint_freq: 1000
+steps: 1000000
+log_freq: 2000
+checkpoint_freq: 2000
 optim:
     type: adam
     lr: 0.00005
 loss_fn:
     type: mse
 b_size: 64
-seq_len: !curriculum
-    start: 5
-    stop: 131
-    step_size: 1
-    step_len: 1000
+seq_len: 31
 x_dim: 1
 x_dist:
     type: uniform
@@ -25,13 +21,3 @@ model: *lora_std_gpt2
         fan_in_fan_out: True
         lora_dropout: 0.0
         target_modules: ["attn.c_attn"]
-baseline_models: 
-    - <<: *knn_3
-    - <<: *xgboost
-    - <<: *decision_tree
-    - <<: *decision_tree_4
-    - <<: *least_squares
-    - <<: *averaging
-    - <<: *mlp
-    - <<: *lasso
-      alpha: 0.001
