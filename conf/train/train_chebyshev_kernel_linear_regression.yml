@@ -1,6 +1,6 @@
 function_class: 
     type: chebyshev kernel linear regression
-steps: 2 #2000000
+steps: 2000000
 log_freq: 100
 checkpoint_freq: 1000
 optim:
@@ -11,7 +11,7 @@ loss_fn:
 b_size: 64
 seq_len: !curriculum
     start: 5
-    stop: 131
+    stop: 81
     step_size: 1
     step_len: 1000
 x_dim: 1

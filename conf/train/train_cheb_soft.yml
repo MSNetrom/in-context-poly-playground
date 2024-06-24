@@ -1,6 +1,6 @@
 function_class: 
     type: chebyshev kernel linear regression
-steps: 2 #2000000
+steps: 1000000
 log_freq: 100
 checkpoint_freq: 1000
 optim:
@@ -9,15 +9,12 @@ optim:
 loss_fn:
     type: mse
 b_size: 64
-seq_len: !curriculum
-    start: 5
-    stop: 131
-    step_size: 1
-    step_len: 1000
+seq_len: 31
 x_dim: 1
 x_dist:
     type: uniform
 model: *soft_prompting_std_gpt2
+    prompt_pairs: 50
 baseline_models: 
     - <<: *knn_3
     - <<: *xgboost

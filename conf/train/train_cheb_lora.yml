@@ -18,6 +18,13 @@ x_dim: 1
 x_dist:
     type: uniform
 model: *lora_std_gpt2
+    lora_config:
+        r: 4
+        lora_alpha: 16
+        bias: none
+        fan_in_fan_out: True
+        lora_dropout: 0.0
+        target_modules: ["attn.c_attn"]
 baseline_models: 
     - <<: *knn_3
     - <<: *xgboost
