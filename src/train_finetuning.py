@@ -2,6 +2,7 @@ from pathlib import Path
 import yaml
 import wandb
 import torch
+from typing import NamedTuple
 
 from utils import log_yaml, get_latest_checkpoint_path_from_dir
 from parse import process_config_from_file
@@ -24,28 +25,36 @@ def perform_training(conf_path: Path, include_path: Path, checkpoint_dir: Path |
 
     return output_dir
 
-WANDB_MODE = "online"
-conf_dir = Path(__file__).parent.parent / "conf"
-conf_include_dir = conf_dir / "include"
-base_model_train_conf_path =  conf_dir / "train" / "train_chebyshev_kernel_linear_regression.yml"
+class TrainInfo(NamedTuple):
+    conf_path: Path
+    output_dir_name: str
+
+# Set constants, variables and paths
+WANDB_MODE = "offline"
+CONF_DIR = Path(__file__).parent.parent / "conf" / "train" / "poly_playground_paper"
+CONF_INCLUDE_DIR = Path(__file__).parent.parent / "conf" / "include" # Yaml-conf files to include
+
+base_model_train_info = TrainInfo(conf_path=CONF_DIR / "train_chebyshev_kernel_linear_regression.yml",
+                                  output_dir_name="poly_base_model")
+
+fine_tune_train_info = [TrainInfo(conf_path=CONF_DIR / "train_chebyshev_lora_4.yml", output_dir_name="poly_lora_model"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_50.yml", output_dir_name="poly_soft_prompting_model")]
 
 # Check cuda status
 print("CUDA available:", torch.cuda.is_available())
 
+# 0. Save results
+results: list[tuple[Path, TrainInfo]] = []  # List of tuples (output_dir, train_info)
+
 # 1. Train base model
-base_model_output_dir = perform_training(conf_path=base_model_train_conf_path, include_path=conf_include_dir, wandb_mode=WANDB_MODE)
+results.append((perform_training(conf_path=base_model_train_info.conf_path, 
+                                 include_path=CONF_INCLUDE_DIR, wandb_mode=WANDB_MODE),
+                base_model_train_info))
 
-# 2. Train Lora model
-lora_model_train_conf_path =  conf_dir / "train" / "train_cheb_lora.yml"
-lora_model_output_dir = perform_training(conf_path=lora_model_train_conf_path, include_path=conf_include_dir, 
-                                         checkpoint_dir=base_model_output_dir, ignore_optim_state=True, wandb_mode=WANDB_MODE)
+# 2. Train finetuning methods
+results.extend([(perform_training(conf_path=train_info.conf_path, include_path=CONF_INCLUDE_DIR, 
+                                  checkpoint_dir=results[0][0], wandb_mode=WANDB_MODE, ignore_optim_state=True),
+                 train_info) for train_info in fine_tune_train_info])
 
-# 3. Train Soft Prompting model
-soft_prompting_model_train_conf_path =  conf_dir / "train" / "train_cheb_soft.yml"
-soft_model_output_dir = perform_training(conf_path=soft_prompting_model_train_conf_path, include_path=conf_include_dir,
-                                         checkpoint_dir=base_model_output_dir, ignore_optim_state=True, wandb_mode=WANDB_MODE)
-
-# 4. Print summary
-print("Summary:", {"base_model_output_dir": str(base_model_output_dir.absolute()), 
-                   "lora_model_output_dir": str(lora_model_output_dir.absolute()),
-                   "soft_prompting_model_output_dir": str(soft_model_output_dir.absolute())})
+# 4. Rename output directories
+[output_dir.rename((output_dir.parent / output_dir_name).absolute()) for output_dir, (_, output_dir_name) in results]

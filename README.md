@@ -1,3 +1,13 @@
+## Polynomial Regression Reproduce Instructions
+
+*A work in progress*. See *Quickstart* for conda setup.
+
+For training base-model, lora, and soft-prompting, run: ```python3 src/train_finetuning.py```.
+
+For evaluating results use the ```eval_finetuning.ipynb``` - notebook.
+
+For visualizing *Chebyshev-Linear-Regression*-functionclass, use the ```visualize_chebyshev_functionclass.ipynb``` - notebook.
+
 ## Quickstart
 
 

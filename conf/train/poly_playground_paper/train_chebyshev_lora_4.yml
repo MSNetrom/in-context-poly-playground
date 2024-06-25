@@ -4,7 +4,7 @@ function_class:
     highest_degree: 5
     fixed_linear_coefficients: 2
     different_degrees: False
-steps: 100000
+steps: 10000
 log_freq: 2000
 checkpoint_freq: 20000
 optim:
@@ -18,5 +18,11 @@ x_dim: 1
 x_dist:
     type: uniform
 model: 
-    <<: *soft_prompting_std_gpt2
-    prompt_pairs: 50
+    <<: *lora_std_gpt2
+    lora_config:
+        r: 4
+        lora_alpha: 16
+        bias: none
+        fan_in_fan_out: True
+        lora_dropout: 0.0
+        target_modules: ["attn.c_attn"]

@@ -4,7 +4,7 @@ function_class:
     highest_degree: 11
     fixed_linear_coefficients: 0
     different_degrees: True
-steps: 300000
+steps: 10000
 log_freq: 2000
 checkpoint_freq: 20000
 optim:
