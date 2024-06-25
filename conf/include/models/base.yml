@@ -20,9 +20,16 @@ model: &std_gpt2
     <<: *base_config
     type: gpt2
 
+model: &std_gpt2_poly_paper
+    type: gpt2
+    n_positions: 81
+    n_layer: 6
+    n_head: 4
+    n_embd: 128
+
 model: &lora_std_gpt2
     type: lora
-    base_model_specs: *std_gpt2
+    base_model_specs: *std_gpt2_poly_paper
     lora_config:
         r: 16
         lora_alpha: 16
@@ -33,7 +40,7 @@ model: &lora_std_gpt2
 
 model: &soft_prompting_std_gpt2
     type: soft_prompting
-    base_model_specs: *std_gpt2
+    base_model_specs: *std_gpt2_poly_paper
     prompt_pairs: 10
 
 model: &std_llama

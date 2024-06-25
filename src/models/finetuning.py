@@ -33,6 +33,8 @@ class LoraGPT2Model(FineTuningGPT2Model):
         # If given weights are for the whole model, load them
         self._load_weights_if_matching(model_weights)
 
+        print("LoraGPT2Model trainable parameters:", self.get_number_of_trainable_parameters())
+
 class SoftPromptingGPT2Model(FineTuningGPT2Model):
         
     def __init__(self, base_model_specs: dict[str, Any], prompt_pairs: int, **kwargs: dict[str, Any]):
@@ -56,6 +58,8 @@ class SoftPromptingGPT2Model(FineTuningGPT2Model):
 
         # If given weights are for the whole model, load them
         self._load_weights_if_matching(model_weights)
+
+        print("SoftPromptingGPT2Model trainable parameters:", self.get_number_of_trainable_parameters())
 
     def forward(self, xs: torch.Tensor, ys: torch.Tensor):
 

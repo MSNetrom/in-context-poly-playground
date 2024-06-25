@@ -37,7 +37,7 @@ class ChebyshevKernelLinearRegression(FunctionClass):
     Linear combinations are generated randomly by sampling from a normal distribution
     """
 
-    def __init__(self, lowest_degree: int = 3, highest_degree: int = 11, fixed_linear_coefficients: int = 0, different_degrees: bool = True, *args: Any, **kwargs: Any):
+    def __init__(self, lowest_degree: int = 0, highest_degree: int = 11, fixed_linear_coefficients: int = 0, different_degrees: bool = True, *args: Any, **kwargs: Any):
 
         self.chebyshev_coeffs = generate_chebyshev_coefficients(lowest_degree, highest_degree).float()
         self.lowest_degree = lowest_degree
@@ -50,7 +50,6 @@ class ChebyshevKernelLinearRegression(FunctionClass):
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
         # Combine each polynomial randomly per sample
-        # combinations: (batch_size, 1 coefficient for each poly in chebyshev_coeffs, seq_length)
         # combinations: (batch_size, repeat for each x-point, 1 coefficient for each poly in chebyshev_coeffs)
         combinations_dist = D.Normal(torch.zeros((self.batch_size, 1, self.chebyshev_coeffs.shape[0])), 1)
         return combinations_dist
@@ -80,10 +79,6 @@ class ChebyshevKernelLinearRegression(FunctionClass):
             combinations[mask_indices] = 0
 
         # Combine basis polynomials into 1
-        #temp = combinations @ basis_polys
-        #print("Temp shape: ", temp.shape)
-        #return 0
-        #return (combinations @ basis_polys).squeeze(1)
         return (combinations @ basis_polys).permute(0, 2, 1)
 
 class ChebyshevSharedRoots(FunctionClass):

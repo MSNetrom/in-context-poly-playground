@@ -130,3 +130,6 @@ class TrainableModel(ContextModel, nn.Module):
     
     def evaluate(self, xs: Tensor, ys: Tensor) -> Tensor:
         return self(xs, ys)
+
+    def get_number_of_trainable_parameters(self) -> int:
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)

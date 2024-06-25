@@ -32,6 +32,8 @@ class BackboneModel(TrainableModel):
         if 'model_weights' in kwargs and kwargs['model_weights'] is not None:
             self.load_state_dict(kwargs['model_weights'])
 
+        print(f"Backbone model {self.name} initialized with {self.get_number_of_trainable_parameters()} trainable parameters")
+
     def forward(self, xs: Tensor, ys: Tensor):
         self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
 
@@ -65,6 +67,7 @@ class GPT2(BackboneModel):
             embd_pdrop=0.0,
             attn_pdrop=0.0,
             use_cache=False,
+            vocab_size=0,
         )
 
         self.gpt2_configuration = configuration
