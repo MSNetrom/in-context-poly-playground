@@ -12,29 +12,29 @@ from train import TrainerSteps
 
 def main(args: arg.Namespace):
 
+    parsed_config = {}
     if args.checkpointfile == "":
         processed_config, parsed_config = process_config_from_file(
             filename=args.conffile,
             include=args.includedir
         )
     else:
-        processed_config = process_config_from_file(
+        processed_config, parsed_config = process_config_from_file(
             filename=args.conffile,
             checkpoint_path=args.checkpointfile,
             include=args.includedir
         )
 
-    init_args: dict[str, Any] = { "config" : processed_config['train'] }
+    init_args: dict[str, Any] = { "config" : parsed_config }
     if args.projectname != "":
         init_args |= { "project" : args.projectname }
     if args.runname != "":
         init_args |= { "name" : args.runname }
+
     wandb.init(**init_args)
+    log_yaml(yaml.dump(parsed_config, Dumper=yaml.Dumper))
 
     trainer = TrainerSteps(**processed_config)
-
-    log_yaml(yaml.dump(processed_config['train'], Dumper=yaml.Dumper))
-
     trainer.train()
 
 

@@ -67,7 +67,6 @@ class ChebyshevKernelLinearRegression(FunctionClass):
         # basis_polys: (batch_size, 1 value for each poly in chebyshev_coeffs, seq_length)
         basis_polys = self.chebyshev_coeffs @ x_pows.permute(0, 2, 1)
 
-        #print("Combantions shape: ", combinations.shape)
         # Set fixed coefficients
         combinations[..., :self.fixed_linear_coefficients] = 1
 

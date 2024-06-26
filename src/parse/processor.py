@@ -113,6 +113,11 @@ def process_config_from_file(
         resume_training: bool = True,
     ) -> tuple[ProcessedYamlMap, ParsedYamlMap]:
 
+    '''
+    resume_training: bool, If True (and checkpoint_path given), the training will resume from the latest checkpoint, and load savedoptimizer state.
+                           If False (and checkpoint_path given), the training will load weights from the checkpoint, but optimizer state will be initialized from scratch (used for finetuning).
+    '''
+
     included = ""
     if include is not None:
         for file in Path(include).rglob("*.yml"):

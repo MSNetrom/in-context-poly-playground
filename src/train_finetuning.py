@@ -44,7 +44,7 @@ fine_tune_train_info = [TrainInfo(conf_path=CONF_DIR / "train_chebyshev_lora_4.y
 # Check cuda status
 print("CUDA available:", torch.cuda.is_available())
 
-# 0. Save results
+# 0. Save results path
 results: list[tuple[Path, TrainInfo]] = []  # List of tuples (output_dir, train_info)
 
 # 1. Train base model
