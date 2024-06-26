@@ -63,7 +63,7 @@ class SoftPromptingGPT2Model(FineTuningGPT2Model):
 
     def forward(self, xs: torch.Tensor, ys: torch.Tensor):
 
-        self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
+        self.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
 
         zs = self.interleave(xs, ys)
 

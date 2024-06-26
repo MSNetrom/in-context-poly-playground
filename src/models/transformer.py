@@ -35,7 +35,8 @@ class BackboneModel(TrainableModel):
         print(f"Backbone model {self.name} initialized with {self.get_number_of_trainable_parameters()} trainable parameters")
 
     def forward(self, xs: Tensor, ys: Tensor):
-        self._backbone.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
+        
+        self.to(xs.device) # pyright: ignore[reportArgumentType,reportAttributeAccessIssue]
 
         zs = self.interleave(xs, ys)
 

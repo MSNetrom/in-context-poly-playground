@@ -138,7 +138,7 @@ class TrainerSteps(ContextTrainer):
         skip_steps: int = 0,
         predict_last: bool = False,
     ):
-
+        
         assert len(function_classes) == len(steps), \
             f"The number of training stages does not match between step counts and function classes!"
         

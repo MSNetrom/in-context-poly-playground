@@ -110,7 +110,7 @@ def process_config_from_file(
         filename: str,
         include: Optional[str],
         checkpoint_path: Optional[str] = None,
-        ignore_optim_state: bool = False,
+        resume_training: bool = True,
     ) -> tuple[ProcessedYamlMap, ParsedYamlMap]:
 
     included = ""
@@ -133,7 +133,7 @@ def process_config_from_file(
     latest_checkpoint = torch.load(checkpoint_path, 
                                    map_location=("cuda" if torch.cuda.is_available() else "cpu"))
     model_state = latest_checkpoint['model_state_dict']
-    optim_state = latest_checkpoint['optimizer_state_dict'] if not ignore_optim_state else None
-    latest_step = int(os.path.basename(checkpoint_path).split("_")[-1])
+    optim_state = latest_checkpoint['optimizer_state_dict'] if resume_training else None
+    latest_step = int(os.path.basename(checkpoint_path).split("_")[-1]) if resume_training else 0
 
     return process_config(full_yaml, latest_step, model_state, optim_state)

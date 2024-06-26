@@ -9,15 +9,17 @@ from parse import process_config_from_file
 from train import TrainerSteps
 
 def perform_training(conf_path: Path, include_path: Path, checkpoint_dir: Path | None = None, 
-                     ignore_optim_state: bool = False, wandb_mode: str = "online") -> Path:
+                     resume_training: bool = True, wandb_mode: str = "online") -> Path:
     
     processed_config, parsed_config = process_config_from_file(filename=str(conf_path), 
                                                                include=str(include_path),
                                                                checkpoint_path=str(get_latest_checkpoint_path_from_dir(checkpoint_dir)) if checkpoint_dir is not None else None,
-                                                               ignore_optim_state=ignore_optim_state)
+                                                               resume_training=resume_training)
+    
     wandb.init(mode=wandb_mode, config=parsed_config)
     log_yaml(yaml.dump(parsed_config, Dumper=yaml.Dumper))
     
+    print("Skip steps:", processed_config['skip_steps'])
     trainer = TrainerSteps(**processed_config)
     trainer.train()
     output_dir = trainer.get_output_dir()
@@ -30,7 +32,7 @@ class TrainInfo(NamedTuple):
     output_dir_name: str
 
 # Set constants, variables and paths
-WANDB_MODE = "offline"
+WANDB_MODE = "online"
 CONF_DIR = Path(__file__).parent.parent / "conf" / "train" / "poly_playground_paper"
 CONF_INCLUDE_DIR = Path(__file__).parent.parent / "conf" / "include" # Yaml-conf files to include
 
@@ -53,7 +55,7 @@ results.append((perform_training(conf_path=base_model_train_info.conf_path,
 
 # 2. Train finetuning methods
 results.extend([(perform_training(conf_path=train_info.conf_path, include_path=CONF_INCLUDE_DIR, 
-                                  checkpoint_dir=results[0][0], wandb_mode=WANDB_MODE, ignore_optim_state=True),
+                                  checkpoint_dir=results[0][0], wandb_mode=WANDB_MODE, resume_training=False),
                  train_info) for train_info in fine_tune_train_info])
 
 # 4. Rename output directories
