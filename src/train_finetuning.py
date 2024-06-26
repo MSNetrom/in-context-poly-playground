@@ -19,7 +19,6 @@ def perform_training(conf_path: Path, include_path: Path, checkpoint_dir: Path |
     wandb.init(mode=wandb_mode, config=parsed_config)
     log_yaml(yaml.dump(parsed_config, Dumper=yaml.Dumper))
     
-    print("Skip steps:", processed_config['skip_steps'])
     trainer = TrainerSteps(**processed_config)
     trainer.train()
     output_dir = trainer.get_output_dir()
