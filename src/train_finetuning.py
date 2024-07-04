@@ -32,17 +32,27 @@ class TrainInfo(NamedTuple):
 
 # Set constants, variables and paths
 WANDB_MODE = "online"
-CONF_DIR = Path(__file__).parent.parent / "conf" / "train" / "poly_playground_paper"
+CONF_DIR = Path(__file__).parent.parent / "conf" / "train" / "poly_playground_paper" / "lora_vs_soft_prompt"
 CONF_INCLUDE_DIR = Path(__file__).parent.parent / "conf" / "include" # Yaml-conf files to include
 
 base_model_train_info = TrainInfo(conf_path=CONF_DIR / "train_chebyshev_kernel_linear_regression.yml",
                                   output_dir_name="poly_base_model")
 
-fine_tune_train_info = [TrainInfo(conf_path=CONF_DIR / "train_chebyshev_lora_4.yml", output_dir_name="poly_lora_model"),
-                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_50.yml", output_dir_name="poly_soft_prompting_model")]
+fine_tune_train_info = [TrainInfo(conf_path=CONF_DIR / "train_chebyshev_lora_4_fixed_0.yml", output_dir_name="poly_lora_4_model_fixed_0"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_2_fixed_0.yml", output_dir_name="poly_soft_prompting_2_model_fixed_0"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_50_fixed_0.yml", output_dir_name="poly_soft_prompting_50_model_fixed_0"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_lora_4_fixed_1.yml", output_dir_name="poly_lora_4_model_fixed_1"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_2_fixed_1.yml", output_dir_name="poly_soft_prompting_2_model_fixed_1"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_50_fixed_1.yml", output_dir_name="poly_soft_prompting_50_model_fixed_1"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_lora_4_fixed_3.yml", output_dir_name="poly_lora_4_model_fixed_3"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_2_fixed_3.yml", output_dir_name="poly_soft_prompting_2_model_fixed_3"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_50_fixed_3.yml", output_dir_name="poly_soft_prompting_50_model_fixed_3"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_lora_4_fixed_5.yml", output_dir_name="poly_lora_4_model_fixed_5"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_2_fixed_5.yml", output_dir_name="poly_soft_prompting_2_model_fixed_5"),
+                        TrainInfo(conf_path=CONF_DIR / "train_chebyshev_soft_prompting_50_fixed_5.yml", output_dir_name="poly_soft_prompting_50_model_fixed_5")]
 
 # Check cuda status
-print("CUDA available:", torch.cuda.is_available())
+print("CUDA available:", torch.cuda.is_available()) 
 
 # 0. Save results path
 results: list[tuple[Path, TrainInfo]] = []  # List of tuples (output_dir, train_info)
