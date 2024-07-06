@@ -17,6 +17,7 @@ from .wrappers import (
 from .chebyshev import (
     ChebyshevKernelLinearRegression,
     ChebyshevSharedRoots,
+    generate_chebyshev_coefficients,
 )
 
 FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
@@ -35,4 +36,5 @@ FUNCTION_CLASSES: dict[str, type[FunctionClass]] = {
 
 __all__ = [
     "FUNCTION_CLASSES",
+    "generate_chebyshev_coefficients",
 ]

@@ -7,10 +7,13 @@ from .transformer import GPT2
 
 class FineTuningGPT2Model(GPT2):
 
-    def _load_weights_if_matching(self, model_weights: dict[str, Any] | None) -> None:
+    def _load_weights_if_matching(self, model_weights: dict[str, Any] | None) -> bool:
         
         if model_weights is not None and model_weights.keys() == self.state_dict().keys():
             self.load_state_dict(model_weights, strict=True)
+            return True
+        
+        return False
         
 
 class LoraGPT2Model(FineTuningGPT2Model):
@@ -22,7 +25,7 @@ class LoraGPT2Model(FineTuningGPT2Model):
         super(LoraGPT2Model, self).__init__(**(base_model_specs | kwargs))
 
         # If given weights are just for base model, load them
-        self._load_weights_if_matching(model_weights)
+        weights_loaded = self._load_weights_if_matching(model_weights)
 
         # Freeze original model
         for param in self.parameters():
@@ -31,7 +34,10 @@ class LoraGPT2Model(FineTuningGPT2Model):
         self._backbone = get_peft_model(self._backbone, LoraConfig(**lora_config)) # pyright: ignore[reportArgumentType]
 
         # If given weights are for the whole model, load them
-        self._load_weights_if_matching(model_weights)
+        weights_loaded |= self._load_weights_if_matching(model_weights)
+
+        if not weights_loaded:
+            raise ValueError("Could not load weights")
 
         print("LoraGPT2Model trainable parameters:", self.get_number_of_trainable_parameters())
 
@@ -44,7 +50,7 @@ class SoftPromptingGPT2Model(FineTuningGPT2Model):
         super(SoftPromptingGPT2Model, self).__init__(**(base_model_specs | kwargs))
 
         # If given weights are just for base model, load them
-        self._load_weights_if_matching(model_weights)
+        weights_loaded = self._load_weights_if_matching(model_weights)
 
         # Freeze original model
         for param in self.parameters():
@@ -57,7 +63,10 @@ class SoftPromptingGPT2Model(FineTuningGPT2Model):
         self.soft_prompt = torch.nn.Parameter(self._read_in(start_inputs))
 
         # If given weights are for the whole model, load them
-        self._load_weights_if_matching(model_weights)
+        weights_loaded |= self._load_weights_if_matching(model_weights)
+
+        if not weights_loaded:
+            raise ValueError("Could not load weights")
 
         print("SoftPromptingGPT2Model trainable parameters:", self.get_number_of_trainable_parameters())
 

@@ -7,6 +7,8 @@ from sklearn.exceptions import ConvergenceWarning
 
 from core import Baseline
 
+from function_classes import generate_chebyshev_coefficients
+
 
 # xs and ys should be on cpu for this method. Otherwise the output maybe off in case when train_xs is not full rank due to the implementation of torch.linalg.lstsq.
 class LeastSquaresModel(Baseline):
@@ -49,6 +51,29 @@ class LeastSquaresModel(Baseline):
             preds.append(pred[:, 0, :1])
 
         return torch.stack(preds, dim=1).to(device=DEVICE)
+    
+
+class ChebyshevKernelLinearRegression_LeastSquares(LeastSquaresModel):
+
+    def __init__(self, max_degree: int = 11, driver: str | None = None, **kwargs: Any):
+        super(ChebyshevKernelLinearRegression_LeastSquares, self).__init__(driver, **kwargs)
+
+        self.max_degree = max_degree
+        self.chebyshev_coeffs = generate_chebyshev_coefficients(0, self.max_degree).float()
+
+    def evaluate(self, xs: torch.Tensor, ys: torch.Tensor) -> torch.Tensor:
+
+        xs, ys = xs.cpu(), ys.cpu()
+        
+        # Generate x to the power of i
+        # x_pows: (batch_size, seq_length, repeated x_values but to the power of different degrees)
+        x_pows = xs.pow(torch.arange(0, self.max_degree + 1))
+
+        # chebyshev_coeffs: (different basis polys, one element for each possible degree of poly)
+        # basis_polys: (batch_size, 1 value for each poly in chebyshev_coeffs, seq_length)
+        basis_polys = x_pows @ self.chebyshev_coeffs.T
+
+        return super().evaluate(basis_polys, ys)
 
 
 class AveragingModel(Baseline):

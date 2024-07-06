@@ -1,5 +1,6 @@
 from .linear import (
     LeastSquaresModel,
+    ChebyshevKernelLinearRegression_LeastSquares,
     AveragingModel,
     LassoModel,
 )
@@ -13,6 +14,7 @@ from .retrieval_dict import RetrievalDictModel
 
 __all__ = [
     "LeastSquaresModel",
+    "ChebyshevKernelLinearRegression_LeastSquares",
     "KNNModel",
     "AveragingModel",
     "LassoModel",
