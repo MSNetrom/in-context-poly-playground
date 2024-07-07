@@ -143,8 +143,6 @@ class FakeLinspaceDistribution(dist.Distribution):
 
         self._sample = torch.linspace(-1, 1, self.seq_len).repeat(self.batch_size, 1).unsqueeze(-1)
 
-        print("Sample shape", self._sample.shape)
-
     def sample(self, sample_shape: torch.Size = torch.Size()):
         return self._sample
     
