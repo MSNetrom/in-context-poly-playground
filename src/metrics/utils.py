@@ -1,5 +1,6 @@
 import torch
-import scipy as sp
+from scipy.stats import norm
+import numpy as np
 
 from typing import Iterable
 from torch import Tensor
