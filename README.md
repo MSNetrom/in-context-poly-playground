@@ -2,7 +2,7 @@
 
 *A work in progress*. See *Quickstart* for conda setup.
 
-For training base-model, lora, and soft-prompting, run: ```python3 src/train_finetuning.py```.
+For training base-model, lora, and soft-prompting, run: ```python3 src/train_finetuning.py```. Alternatively, download checkpoints from [here](https://drive.google.com/drive/folders/1cnyE_TMa3EPcfJy68xncmLGaqnZg0C91?usp=sharing).
 
 For evaluating results use the ```eval_finetuning.ipynb``` - notebook.
 
