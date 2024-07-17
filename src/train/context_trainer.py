@@ -1,28 +1,34 @@
+# pyright: reportMissingSuperCall=information
+
 import torch
 import wandb
 import os
 from torch import nn
 
 from torch.optim import Optimizer
-from typing import Optional, List, Any
+from typing import Optional, Any
+from pathlib import Path
 
-from core import ContextModel, FunctionClass
+from core import Baseline, TrainableModel, FunctionClass
 
 class ContextTrainer:
     def __init__(
         self, 
         function_class: FunctionClass,
-        model: ContextModel,
+        model: TrainableModel,
         optim: Optimizer, 
         loss_fn: nn.Module,
         steps: int,
-        baseline_models: List[ContextModel],
+        baseline_models: list[Baseline],
         log_freq: int = -1,
         checkpoint_freq: int = -1,
         step_offset: int = 0,
         skip_steps: int = 0,
-        **kwargs, 
+        predict_last: bool = False,
+        output_dir: str = f"models/",
+        **kwargs: Any, 
     ):
+        super().__init__()
         self.function_class = function_class
         self.model = model
         self.optim = optim 
@@ -33,8 +39,11 @@ class ContextTrainer:
         self.checkpoint_freq = checkpoint_freq
         self.step_offset = step_offset
         self.skip_steps = skip_steps
+        self.predict_last = predict_last
 
-    def _log(self, step: int, data: dict) -> None:
+        self.output_dir = output_dir
+
+    def _log(self, step: int, data: dict[str, Any]) -> None:
         global_step_num = step + self.step_offset
         wandb.log(
             data=data,
@@ -49,9 +58,9 @@ class ContextTrainer:
                         'optimizer_state_dict': self.optim.state_dict()}
 
             # save locally
-            local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
-            os.makedirs(local_dir_path, exist_ok=True)
-            torch.save(checkpoint, os.path.join(local_dir_path, f"checkpoint_{global_step_num}"))
+            #local_dir_path = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
+            os.makedirs(self.output_dir, exist_ok=True)
+            torch.save(checkpoint, os.path.join(self.output_dir, f"checkpoint_{global_step_num}"))
 
             # save in wandb
             wandb_dir_path = os.path.join(wandb.run.dir, 'models') # pyright: ignore [reportOptionalMemberAccess]
@@ -60,20 +69,26 @@ class ContextTrainer:
             torch.save(checkpoint, wandb_path)
             wandb.save(wandb_path, base_path=wandb.run.dir) # pyright: ignore [reportOptionalMemberAccess]
 
-    def train(self, pbar: Optional[Any] = None) -> ContextModel:
+    def get_output_dir(self) -> Path:
+        return Path(self.output_dir)
+
+    def train(self, pbar: Optional[Any] = None) -> TrainableModel:
 
         baseline_loss = {}
 
         for i, (x_batch, y_batch) in zip(range(self.skip_steps, self.steps), self.function_class):
 
-            output = self.model(x_batch, y_batch)
+            output = self.model.evaluate(x_batch, y_batch)
             if output.shape != y_batch.shape:
                 raise ValueError(
                     f"Model {self.model.name} produced ill-shaped predictions!"
                     + f"Expected: {y_batch.shape}    Got: {output.shape}"
                 )
 
-            loss = self.loss_fn(output, y_batch)
+            if not self.predict_last:
+                loss = self.loss_fn(output, y_batch)
+            else:
+                loss = self.loss_fn(output[:, -1], y_batch[:, -1])
 
             self.optim.zero_grad()
             loss.backward()
@@ -85,8 +100,7 @@ class ContextTrainer:
 
             if self.log_freq > 0 and i % self.log_freq == 0:
                 for baseline in self.baseline_models:
-                    baseline.eval()
-                    baseline_output = baseline(x_batch, y_batch)
+                    baseline_output = baseline.evaluate(x_batch, y_batch)
 
                     if baseline_output.shape != y_batch.shape:
                         raise ValueError(
@@ -112,18 +126,19 @@ class ContextTrainer:
 
 class TrainerSteps(ContextTrainer):
 
-    def __init__(self, 
+    def __init__(self,
         function_classes: list[FunctionClass], 
-        model: ContextModel, 
+        model: TrainableModel, 
         optim: Optimizer, 
         loss_fn: nn.Module, 
         steps: list[int], 
-        baseline_models: list[ContextModel],
+        baseline_models: list[Baseline],
         log_freq: int = -1,
         checkpoint_freq: int = -1,
         skip_steps: int = 0,
+        predict_last: bool = False,
     ):
-
+        
         assert len(function_classes) == len(steps), \
             f"The number of training stages does not match between step counts and function classes!"
         
@@ -140,8 +155,11 @@ class TrainerSteps(ContextTrainer):
         self.checkpoint_freq = checkpoint_freq
         self.skip_steps_left = skip_steps
         self.step_offset = 0
+        self.predict_last = predict_last
 
-    def train(self, pbar: Optional[Any] = None) -> ContextModel:
+        self.output_dir = f"models/{os.path.basename(os.path.dirname(wandb.run.dir)).replace('run-', '')}" # pyright: ignore [reportOptionalMemberAccess]
+
+    def train(self, pbar: Optional[Any] = None) -> TrainableModel:
 
         for fc, step_count, in zip(self.function_classes, self.steps):
 
@@ -155,7 +173,9 @@ class TrainerSteps(ContextTrainer):
                 self.log_freq,
                 self.checkpoint_freq,
                 self.step_offset,
-                self.skip_steps_left
+                self.skip_steps_left,
+                self.predict_last,
+                self.output_dir,
             )
 
             self.model = trainer.train(pbar)

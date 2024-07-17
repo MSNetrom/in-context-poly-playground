@@ -1,14 +1,17 @@
-from .trainer import (
-    parse_training, 
-    parse_training_from_file, 
-    get_loss_fn, 
-    get_function_class, 
-    get_model, 
-    get_optimizer, 
-    get_value, 
+
+from .processor import (
+    process_config_from_file, 
+    process_config,
+)
+
+from .dist import (
+    get_distribution,
     get_x_distribution,
 )
 
 __all__ = [
-    "parse_training",
+    "process_config_from_file",
+    "process_config",
+    "get_distribution",
+    "get_x_distribution",
 ]

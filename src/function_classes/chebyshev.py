@@ -1,9 +1,19 @@
 import torch
 import torch.distributions as D
 
+from torch import Tensor
+from typing import Any
+
 from core import FunctionClass
 
-def generate_chebyshev_coefficients(lowest_degree, highest_degree):
+def generate_chebyshev_coefficients(lowest_degree: int, highest_degree: int) -> Tensor:
+    assert lowest_degree >= 0, "Lowest degree must be greater than or equal to 0"
+    assert highest_degree >= lowest_degree, "Highest degree must be greater than or equal to lowest degree"
+
+    # If highest degree is 0, return 1
+    if highest_degree == 0:
+        return torch.tensor([[1]])
+
     # Create a matrix to hold the coefficients, initializing with zeros
     n = highest_degree + 1
     coeffs = torch.zeros(n, n, dtype=torch.int32)
@@ -27,18 +37,20 @@ class ChebyshevKernelLinearRegression(FunctionClass):
     Linear combinations are generated randomly by sampling from a normal distribution
     """
 
-    def __init__(self, lowest_degree=3, highest_degree=11, *args, **kwargs):
+    def __init__(self, lowest_degree: int = 0, highest_degree: int = 11, fixed_linear_coefficients: int = 0, different_degrees: bool = True, *args: Any, **kwargs: Any):
 
         self.chebyshev_coeffs = generate_chebyshev_coefficients(lowest_degree, highest_degree).float()
         self.lowest_degree = lowest_degree
         self.highest_degree = highest_degree
+        self.fixed_linear_coefficients = fixed_linear_coefficients
+        self.different_degrees = different_degrees
 
         super(ChebyshevKernelLinearRegression, self).__init__(*args, **kwargs)
 
     def _init_param_dist(self) -> D.Distribution:
         """Produce the distribution with which to sample parameters"""
         # Combine each polynomial randomly per sample
-        # combinations: (batch_size, 1 coefficient for each poly in chebyshev_coeffs, seq_length)
+        # combinations: (batch_size, repeat for each x-point, 1 coefficient for each poly in chebyshev_coeffs)
         combinations_dist = D.Normal(torch.zeros((self.batch_size, 1, self.chebyshev_coeffs.shape[0])), 1)
         return combinations_dist
 
@@ -55,14 +67,18 @@ class ChebyshevKernelLinearRegression(FunctionClass):
         # basis_polys: (batch_size, 1 value for each poly in chebyshev_coeffs, seq_length)
         basis_polys = self.chebyshev_coeffs @ x_pows.permute(0, 2, 1)
 
+        # Set fixed coefficients
+        combinations[..., :self.fixed_linear_coefficients] = 1
+
         # Only include coefficients up to random degree
-        indices = torch.arange(0, self.chebyshev_coeffs.shape[0]).unsqueeze(0).expand(self.batch_size, -1)
-        rand_tresh = torch.randint(0, self.chebyshev_coeffs.shape[0], (self.batch_size, 1))
-        mask_indices = (rand_tresh < indices).unsqueeze(1)
-        combinations[mask_indices] = 0
+        if self.different_degrees:
+            indices = torch.arange(0, self.chebyshev_coeffs.shape[0]).unsqueeze(0).expand(self.batch_size, -1)
+            rand_tresh = torch.randint(0, self.chebyshev_coeffs.shape[0], (self.batch_size, 1))
+            mask_indices = (rand_tresh < indices).unsqueeze(1)
+            combinations[mask_indices] = 0
 
         # Combine basis polynomials into 1
-        return (combinations @ basis_polys).squeeze(1)
+        return (combinations @ basis_polys).permute(0, 2, 1)
 
 class ChebyshevSharedRoots(FunctionClass):
 
@@ -71,7 +87,7 @@ class ChebyshevSharedRoots(FunctionClass):
     Roots can be uniformly randomly perturbed
     """
 
-    def __init__(self, degree=5, perturbation=0.1, *args, **kwargs):
+    def __init__(self, degree: int = 5, perturbation: float = 0.1, *args: Any, **kwargs: Any):
 
         self.perturbation = perturbation
         self._one_minus_one = torch.tensor([-1, 1])
