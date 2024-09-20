@@ -1,3 +1,5 @@
+Code for the paper ["Polynomial Regression as a Task for Understanding In-context Learning Through Finetuning and Alignment" ](https://arxiv.org/abs/2407.19346)
+
 ## Polynomial Regression Reproduce Instructions
 
 *A work in progress*. See *Quickstart* for conda setup.
